@@ -1,8 +1,11 @@
 # A rapid game development project template
 
 ## Requirement
+
 [L×VE](http://love2d.org/)
+
 [Moonscript](http://moonscript.org/)
+
 [Python 3.x](https://www.python.org/), or you can make the script 2.x compatible
 
 ## Feature
