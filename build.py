@@ -1,7 +1,7 @@
 # Directory
-PATH_OUT = "_out"
-PATH_SRC = "source"
-PATH_AST = "asset"
+PATH_DYNAMIC = "dynamic/"
+PATH_STATIC  = "static/"
+PATH_OUT     = "_out/"
 
 # External exes
 EXE_MOONC = "moonc"
@@ -12,6 +12,48 @@ import os
 # import sys
 import shutil
 import subprocess
+
+def copytree(src, dst, symlinks=False, ignore=None, copy_function=shutil.copy2):
+    names = os.listdir(src)
+    if ignore is not None:
+        ignored_names = ignore(src, names)
+    else:
+        ignored_names = set()
+    os.makedirs(dst, exist_ok=True)
+    errors = []
+    for name in names:
+        if name in ignored_names:
+            continue
+        srcname = os.path.join(src, name)
+        dstname = os.path.join(dst, name)
+        try:
+            if os.path.islink(srcname):
+                linkto = os.readlink(srcname)
+                if symlinks:
+                    os.symlink(linkto, dstname)
+                    shutil.copystat(srcname, dstname, follow_symlinks=not symlinks)
+                else:
+                    if os.path.isdir(srcname):
+                        copytree(srcname, dstname, symlinks, ignore,
+                                 copy_function)
+                    else:
+                        copy_function(srcname, dstname)
+            elif os.path.isdir(srcname):
+                copytree(srcname, dstname, symlinks, ignore, copy_function)
+            else:
+                copy_function(srcname, dstname)
+        except shutil.Error as err:
+            errors.extend(err.args[0])
+        except OSError as why:
+            errors.append((srcname, dstname, str(why)))
+    try:
+        shutil.copystat(src, dst)
+    except OSError as why:
+        if getattr(why, 'winerror', None) is None:
+            errors.append((src, dst, str(why)))
+    if errors:
+        raise shutil.Error(errors)
+    return dst
 
 # Helpers
 
@@ -40,6 +82,7 @@ EXT_SRC = {
 
 # Copying/Compiling source code
 
+# TODO add asset pipelines
 
 def ignore_func_helper(file_name):
     return get_ext(file_name) not in EXT_SRC
@@ -59,5 +102,6 @@ def copy_func(src, dst, *, follow_symlinks=True):
 if os.path.exists(PATH_OUT):
     shutil.rmtree(PATH_OUT)
 
-shutil.copytree(PATH_SRC, PATH_OUT, symlinks=True,
-                ignore=ignore_func, copy_function=copy_func)
+copytree(PATH_DYNAMIC, PATH_OUT, ignore=ignore_func, copy_function=copy_func)
+
+copytree(PATH_STATIC, PATH_OUT)
