@@ -1,0 +1,16 @@
+{
+	"build_systems":
+	[
+		{
+			"cmd": "test.cmd",
+			"name": "Test Game",
+			"shell": true,
+			"working_dir": "$project_path"
+		},
+	],
+	"folders":
+	[
+		{"path": "dynamic"},
+		{"path": "static"}
+	]
+}
