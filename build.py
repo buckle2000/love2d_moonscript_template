@@ -1,15 +1,15 @@
 # Directory
-PATH_DYNAMIC = "dynamic/"
-PATH_STATIC  = "static/"
-PATH_OUT     = "_out/"
+PATH_DYNAMIC  = "dynamic/"
+PATH_STATIC   = "static/"
+PATH_EXTERNAL = "external/"
+PATH_OUT      = "_out/src"
 
 # External exes
-EXE_MOONC = "moonc"
-EXE_ASPRITE = "TODO"
-EXE_TILED = "TODO"
+EXE_MOONC    = "moonc"
+EXE_ASEPRITE = "aseprite"
+EXE_TILED    = "tiled"
 
 import os
-# import sys
 import shutil
 import subprocess
 
@@ -99,9 +99,14 @@ def copy_func(src, dst, *, follow_symlinks=True):
     ext = get_extp(src)
     EXT_SRC[ext](src, dst, follow_symlinks=follow_symlinks)
 
-if os.path.exists(PATH_OUT):
-    shutil.rmtree(PATH_OUT)
+def build():
+    if os.path.exists(PATH_OUT):
+        shutil.rmtree(PATH_OUT)
 
-copytree(PATH_DYNAMIC, PATH_OUT, ignore=ignore_func, copy_function=copy_func)
+    copytree(PATH_DYNAMIC, PATH_OUT, ignore=ignore_func, copy_function=copy_func)
 
-copytree(PATH_STATIC, PATH_OUT)
+    copytree(PATH_STATIC, PATH_OUT)
+    copytree(PATH_EXTERNAL, PATH_OUT)
+
+if __name__ == '__main__':
+    build()
