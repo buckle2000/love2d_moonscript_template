@@ -1,10 +1,12 @@
-# Directory
+## Directory
 PATH_DYNAMIC  = "dynamic/"
 PATH_STATIC   = "static/"
 PATH_EXTERNAL = "external/"
 PATH_OUT      = "_out/src"
 
-# External exes
+## External executables
+# Make sure you can run these in shell;
+# otherwise, put full path here (e.g. "C:/path/to/moonc.exe" or "/path/to/moonc")
 EXE_MOONC    = "moonc"
 EXE_ASEPRITE = "aseprite"
 EXE_TILED    = "tiled"
@@ -57,22 +59,6 @@ def copytree(src, dst, symlinks=False, ignore=None, copy_function=shutil.copy2):
 
 def make_archive(base_name, format, root_dir=None, base_dir=None, verbose=0,
                  dry_run=0, owner=None, group=None, logger=None):
-    """Create an archive file (eg. zip or tar).
-
-    'base_name' is the name of the file to create, minus any format-specific
-    extension; 'format' is the archive format: one of "zip", "tar", "bztar"
-    or "gztar".
-
-    'root_dir' is a directory that will be the root directory of the
-    archive; ie. we typically chdir into 'root_dir' before creating the
-    archive.  'base_dir' is the directory where we start archiving from;
-    ie. 'base_dir' will be the common prefix of all files and
-    directories in the archive.  'root_dir' and 'base_dir' both default
-    to the current directory.  Returns the name of the archive file.
-
-    'owner' and 'group' are used when creating a tar archive. By default,
-    uses the current owner and group.
-    """
     save_cwd = os.getcwd()
     if root_dir is not None:
         if logger is not None:
@@ -123,7 +109,6 @@ def change_ext(file_name, new_ext):
     return before_ext + new_ext
 
 # Acceptable File Ext and Copy Function
-
 
 def copy_moon(src, dst, *, follow_symlinks=True):
     subprocess.call([EXE_MOONC, "-o", change_ext(dst, ".lua"), src], timeout=1)
