@@ -55,6 +55,60 @@ def copytree(src, dst, symlinks=False, ignore=None, copy_function=shutil.copy2):
         raise shutil.Error(errors)
     return dst
 
+def make_archive(base_name, format, root_dir=None, base_dir=None, verbose=0,
+                 dry_run=0, owner=None, group=None, logger=None):
+    """Create an archive file (eg. zip or tar).
+
+    'base_name' is the name of the file to create, minus any format-specific
+    extension; 'format' is the archive format: one of "zip", "tar", "bztar"
+    or "gztar".
+
+    'root_dir' is a directory that will be the root directory of the
+    archive; ie. we typically chdir into 'root_dir' before creating the
+    archive.  'base_dir' is the directory where we start archiving from;
+    ie. 'base_dir' will be the common prefix of all files and
+    directories in the archive.  'root_dir' and 'base_dir' both default
+    to the current directory.  Returns the name of the archive file.
+
+    'owner' and 'group' are used when creating a tar archive. By default,
+    uses the current owner and group.
+    """
+    save_cwd = os.getcwd()
+    if root_dir is not None:
+        if logger is not None:
+            logger.debug("changing into '%s'", root_dir)
+        base_name = os.path.abspath(base_name)
+        if not dry_run:
+            os.chdir(root_dir)
+
+    if base_dir is None:
+        base_dir = os.curdir
+
+    kwargs = {'dry_run': dry_run, 'logger': logger}
+
+    try:
+        format_info = shutil._ARCHIVE_FORMATS[format]
+    except KeyError:
+        raise ValueError("unknown archive format '%s'" % format)
+
+    func = format_info[0]
+    for arg, val in format_info[1]:
+        kwargs[arg] = val
+
+    if format != 'zip':
+        kwargs['owner'] = owner
+        kwargs['group'] = group
+
+    try:
+        filename = func(base_name, base_dir, **kwargs)
+    finally:
+        if root_dir is not None:
+            if logger is not None:
+                logger.debug("changing back to '%s'", save_cwd)
+            os.chdir(save_cwd)
+
+    return filename
+
 # Helpers
 
 get_ext = lambda file_name: os.path.splitext(
@@ -88,7 +142,7 @@ def ignore_func_helper(file_name):
     return get_ext(file_name) not in EXT_SRC
 
 
-def ignore_func(src, file_names):
+def ignore_func(curdir, file_names):
     print("listing", file_names)
     names = filter(ignore_func_helper, file_names)
     return names
@@ -99,14 +153,15 @@ def copy_func(src, dst, *, follow_symlinks=True):
     ext = get_extp(src)
     EXT_SRC[ext](src, dst, follow_symlinks=follow_symlinks)
 
-def build():
-    if os.path.exists(PATH_OUT):
-        shutil.rmtree(PATH_OUT)
+def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
+    if os.path.exists(path_out_fused):
+        shutil.rmtree(path_out_fused)
+    if os.path.exists(path_out_extern):
+        shutil.rmtree(path_out_extern)
 
-    copytree(PATH_DYNAMIC, PATH_OUT, ignore=ignore_func, copy_function=copy_func)
-
-    copytree(PATH_STATIC, PATH_OUT)
-    copytree(PATH_EXTERNAL, PATH_OUT)
+    copytree(PATH_DYNAMIC, path_out_fused, ignore=ignore_func, copy_function=copy_func)
+    copytree(PATH_STATIC, path_out_fused)
+    copytree(PATH_EXTERNAL, path_out_extern)
 
 if __name__ == '__main__':
     build()
