@@ -12,7 +12,7 @@
 
 ### General
 - [X] One-click testing
-- [ ] One-click Windows distribution
+- [X] One-click Build Windows Distribution
 
 ### Source
 - [X] Mix `.moon` and `.lua` files
