@@ -40,8 +40,8 @@ Run `build_win.py`.
 ### Asset Pipeline
 i.e. auto-process in one click
 
-- [ ] [Aseprite](http://www.aseprite.org/)
-- [ ] [Tiled](http://www.mapeditor.org/)
+- [X] [Aseprite](http://www.aseprite.org/)
+- [X] [Tiled](http://www.mapeditor.org/)
 
 
 ## Directory Structure
@@ -52,8 +52,8 @@ These files will be processed before written to the output.
 Files that are not end in any of the following extensions are ignored.
 - [X] `.lua`: lua script
 - [X] `.moon`: moonscript script
-- [ ] `.aseprite`: Aseprite document (image)
-- [ ] `.tmx`: Tiled document (map)
+- [X] `.ase` or `.aseprite`: Aseprite document (image)
+- [X] `.tmx`: Tiled document (map)
 
 ### `static/`
 These files will be copied as-is to the output.

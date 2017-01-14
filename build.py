@@ -1,19 +1,22 @@
-## Directory
-PATH_DYNAMIC  = "dynamic/"
-PATH_STATIC   = "static/"
+# Directory
+PATH_DYNAMIC = "dynamic/"
+PATH_STATIC = "static/"
 PATH_EXTERNAL = "external/"
-PATH_OUT      = "_out/src"
+PATH_OUT = "_out/src"
 
-## External executables
+# External executables
 # Make sure you can run these in shell;
-# otherwise, put full path here (e.g. "C:/path/to/moonc.exe" or "/path/to/moonc")
-EXE_MOONC    = "moonc"
+# otherwise, put full path here (e.g. "C:/path/to/moonc.exe" or
+# "/path/to/moonc")
+EXE_MOONC = "moonc"
 EXE_ASEPRITE = "aseprite"
-EXE_TILED    = "tiled"
+EXE_TILED = "tiled"
 
 import os
 import shutil
 import subprocess
+import IPython
+
 
 def copytree(src, dst, symlinks=False, ignore=None, copy_function=shutil.copy2):
     names = os.listdir(src)
@@ -33,7 +36,8 @@ def copytree(src, dst, symlinks=False, ignore=None, copy_function=shutil.copy2):
                 linkto = os.readlink(srcname)
                 if symlinks:
                     os.symlink(linkto, dstname)
-                    shutil.copystat(srcname, dstname, follow_symlinks=not symlinks)
+                    shutil.copystat(srcname, dstname,
+                                    follow_symlinks=not symlinks)
                 else:
                     if os.path.isdir(srcname):
                         copytree(srcname, dstname, symlinks, ignore,
@@ -57,8 +61,8 @@ def copytree(src, dst, symlinks=False, ignore=None, copy_function=shutil.copy2):
         raise shutil.Error(errors)
     return dst
 
-def make_archive(base_name, format, root_dir=None, base_dir=None, verbose=0,
-                 dry_run=0, owner=None, group=None, logger=None):
+
+def make_archive(base_name, format, root_dir=None, base_dir=None, verbose=0, dry_run=0, owner=None, group=None, logger=None):
     save_cwd = os.getcwd()
     if root_dir is not None:
         if logger is not None:
@@ -97,8 +101,8 @@ def make_archive(base_name, format, root_dir=None, base_dir=None, verbose=0,
 
 # Helpers
 
-get_ext = lambda file_name: os.path.splitext(
-    file_name)[1]  # get ext from file name
+get_file = lambda file_name: os.path.splitext(file_name)[0]
+get_ext = lambda file_name: os.path.splitext(file_name)[1]
 get_fname = lambda path: os.path.split(path)[1]  # get file name from path
 get_extp = lambda path: get_ext(get_fname(path))  # get ext from path
 get_dir = lambda path: os.path.split(path)[0]  # get dir from path
@@ -110,18 +114,43 @@ def change_ext(file_name, new_ext):
 
 # Acceptable File Ext and Copy Function
 
-def copy_moon(src, dst, *, follow_symlinks=True):
+
+def process_moon(src, dst, *, follow_symlinks=True):
     subprocess.call([EXE_MOONC, "-o", change_ext(dst, ".lua"), src], timeout=1)
 
+def process_aseprite(src, dst, *, follow_symlinks=True):
+    dstdir, dstfname = os.path.split(dst)
+    root = get_file(dstfname)
+    sheet_data = dstdir + os.sep + root + ".json"
+    # IPython.embed()
+    dst = dstdir + os.sep + root + ".png"
+    # image which filename ends with '#' is an animation atlas
+    if root.endswith('#'):
+        subprocess.call((EXE_ASEPRITE, '-b', src, "--sheet", dst, "--data", sheet_data,
+            "--list-tags", "--format", "json-array"))
+    else:
+        subprocess.call((EXE_ASEPRITE, '-b', src, "--save-as", dst))
+
+def process_tiled(src, dst, *, follow_symlinks=True):
+    dstdir, dstfile = os.path.split(dst)
+    root = get_file(dstfile)
+    # IPython.embed()
+    dst = dstdir + os.sep + root + ".lua"
+    subprocess.call((EXE_TILED, "--export-map", src, dst))
+
 EXT_SRC = {
-    "": None,  # should be directory
-    ".lua": shutil.copy2,
-    ".moon": copy_moon,
+    "":          None,  # should be directory
+    ".lua":      shutil.copy2,
+    ".moon":     process_moon,
+    ".ase":      process_aseprite,
+    ".aseprite": process_aseprite,
+    ".tmx":      process_tiled,
 }
 
 # Copying/Compiling source code
 
 # TODO add asset pipelines
+
 
 def ignore_func_helper(file_name):
     return get_ext(file_name) not in EXT_SRC
@@ -134,9 +163,10 @@ def ignore_func(curdir, file_names):
 
 
 def copy_func(src, dst, *, follow_symlinks=True):
-    print("Copying", src, dst)
+    print("Processing", src)
     ext = get_extp(src)
     EXT_SRC[ext](src, dst, follow_symlinks=follow_symlinks)
+
 
 def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
     if os.path.exists(path_out_fused):
@@ -144,7 +174,8 @@ def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
     if os.path.exists(path_out_extern):
         shutil.rmtree(path_out_extern)
 
-    copytree(PATH_DYNAMIC, path_out_fused, ignore=ignore_func, copy_function=copy_func)
+    copytree(PATH_DYNAMIC, path_out_fused,
+             ignore=ignore_func, copy_function=copy_func)
     copytree(PATH_STATIC, path_out_fused)
     copytree(PATH_EXTERNAL, path_out_extern)
 
