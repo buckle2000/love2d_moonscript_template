@@ -158,7 +158,7 @@ def ignore_func(curdir, file_names):
 def copy_func(src, dst, *, follow_symlinks=True):
     print("Processing", src)
     ext = get_extp(src)
-    EXT_SRC[ext](src, dst, follow_symlinks=follow_symlinks)
+    EXT_SRC.get(ext, shutil.copy2)(src, dst, follow_symlinks=follow_symlinks)
 
 
 def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
