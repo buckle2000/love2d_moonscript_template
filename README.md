@@ -51,14 +51,17 @@ These files will be processed before written to the output.
 
 Files that are not end in any of the following extensions are ignored.
 - [X] `.lua`: lua script
-- [X] `.moon`: moonscript script
-- [X] `.ase` or `.aseprite`: Aseprite document (image)
-- [X] `.tmx`: Tiled document (map)
+- [X] `.moon` -> `.lua`: moonscript script
+- [X] `.ase` or `.aseprite` -> `.png`: Aseprite document (image)
+- [X] `.tmx` -> `.lua`: Tiled document (map)
+
+Make sure you put your "raw" assets here!
 
 ### `static/`
 These files will be copied as-is to the output.
 
 ### `external/`
 Simliar to `dynamic/`, except that these files will not be fused in the game executable. i.e. placed beside the executable.
-
 When testing, same as `dynamic/`.
+
+Files inside `external/` will be processed but **not a single file is ignored**.

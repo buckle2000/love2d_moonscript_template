@@ -101,12 +101,12 @@ def make_archive(base_name, format, root_dir=None, base_dir=None, verbose=0, dry
 
 # Helpers
 
-get_file = lambda file_name: os.path.splitext(file_name)[0]
-get_ext = lambda file_name: os.path.splitext(file_name)[1]
-get_fname = lambda path: os.path.split(path)[1]  # get file name from path
-get_extp = lambda path: get_ext(get_fname(path))  # get ext from path
-get_dir = lambda path: os.path.split(path)[0]  # get dir from path
-
+get_file   = lambda file_name: os.path.splitext(file_name)[0]
+get_ext    = lambda file_name: os.path.splitext(file_name)[1]
+get_fname  = lambda path: os.path.split(path)[1]  # get file name from path
+get_extp   = lambda path: get_ext(get_fname(path))  # get ext from path
+get_dir    = lambda path: os.path.split(path)[0]  # get dir from path
+change_ext = lambda path,ext: os.path.splitext(path)[0] + ext
 
 def change_ext(file_name, new_ext):
     before_ext, ext = os.path.splitext(file_name)
@@ -119,23 +119,16 @@ def process_moon(src, dst, *, follow_symlinks=True):
     subprocess.call([EXE_MOONC, "-o", change_ext(dst, ".lua"), src], timeout=1)
 
 def process_aseprite(src, dst, *, follow_symlinks=True):
-    dstdir, dstfname = os.path.split(dst)
-    root = get_file(dstfname)
-    sheet_data = dstdir + os.sep + root + ".json"
-    # IPython.embed()
-    dst = dstdir + os.sep + root + ".png"
-    # image which filename ends with '#' is an animation atlas
-    if root.endswith('#'):
-        subprocess.call((EXE_ASEPRITE, '-b', src, "--sheet", dst, "--data", sheet_data,
+    sheet_data = change_ext(dst, ".json")
+    dst = change_ext(dst, ".png")
+    # With sheet data
+    subprocess.call((EXE_ASEPRITE, '-b', src, "--sheet", dst, "--data", sheet_data,
             "--list-tags", "--format", "json-array"))
-    else:
-        subprocess.call((EXE_ASEPRITE, '-b', src, "--save-as", dst))
+    # No sheet data
+    # subprocess.call((EXE_ASEPRITE, '-b', src, "--save-as", dst))
 
 def process_tiled(src, dst, *, follow_symlinks=True):
-    dstdir, dstfile = os.path.split(dst)
-    root = get_file(dstfile)
-    # IPython.embed()
-    dst = dstdir + os.sep + root + ".lua"
+    dst = change_ext(dst, ".lua")
     subprocess.call((EXE_TILED, "--export-map", src, dst))
 
 EXT_SRC = {
@@ -177,7 +170,7 @@ def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
     copytree(PATH_DYNAMIC, path_out_fused,
              ignore=ignore_func, copy_function=copy_func)
     copytree(PATH_STATIC, path_out_fused)
-    copytree(PATH_EXTERNAL, path_out_extern)
+    copytree(PATH_EXTERNAL, path_out_extern, copy_function=copy_func)
 
 if __name__ == '__main__':
     build()
