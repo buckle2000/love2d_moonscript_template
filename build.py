@@ -2,7 +2,9 @@
 PATH_DYNAMIC = "dynamic/"
 PATH_STATIC = "static/"
 PATH_EXTERNAL = "external/"
-PATH_OUT = "_out/src"
+PATH_OUT = "__pycache__/src"
+PATH_TMP = "__pycache__/"
+PATH_INCDB = PATH_TMP + 'last_touch.pickle'
 
 # External executables
 # Make sure you can run these in shell;
@@ -12,7 +14,11 @@ EXE_MOONC = "moonc"
 EXE_ASEPRITE = "aseprite"
 EXE_TILED = "tiled"
 
+INCREMENT = False
+
 import os
+import time
+import pickle
 import shutil
 import subprocess
 import IPython
@@ -101,12 +107,13 @@ def make_archive(base_name, format, root_dir=None, base_dir=None, verbose=0, dry
 
 # Helpers
 
-get_file   = lambda file_name: os.path.splitext(file_name)[0]
-get_ext    = lambda file_name: os.path.splitext(file_name)[1]
-get_fname  = lambda path: os.path.split(path)[1]  # get file name from path
-get_extp   = lambda path: get_ext(get_fname(path))  # get ext from path
-get_dir    = lambda path: os.path.split(path)[0]  # get dir from path
-change_ext = lambda path,ext: os.path.splitext(path)[0] + ext
+get_file = lambda file_name: os.path.splitext(file_name)[0]
+get_ext = lambda file_name: os.path.splitext(file_name)[1]
+get_fname = lambda path: os.path.split(path)[1]  # get file name from path
+get_extp = lambda path: get_ext(get_fname(path))  # get ext from path
+get_dir = lambda path: os.path.split(path)[0]  # get dir from path
+change_ext = lambda path, ext: os.path.splitext(path)[0] + ext
+
 
 def change_ext(file_name, new_ext):
     before_ext, ext = os.path.splitext(file_name)
@@ -116,28 +123,34 @@ def change_ext(file_name, new_ext):
 
 
 def process_moon(src, dst, *, follow_symlinks=True):
-    subprocess.call([EXE_MOONC, "-o", change_ext(dst, ".lua"), src], timeout=1)
+    dst = change_ext(dst, ".lua")
+    if if_newer(src, dst):
+        subprocess.call([EXE_MOONC, "-o", dst, src], timeout=1)
+
 
 def process_aseprite(src, dst, *, follow_symlinks=True):
     sheet_data = change_ext(dst, ".json")
     dst = change_ext(dst, ".png")
     # With sheet data
-    subprocess.call((EXE_ASEPRITE, '-b', src, "--sheet", dst, "--data", sheet_data,
-            "--list-tags", "--format", "json-array"))
+    if if_newer(src, dst):
+        subprocess.call((EXE_ASEPRITE, '-b', src, "--sheet", dst, "--data", sheet_data,
+                         "--list-tags", "--format", "json-array"))
     # No sheet data
     # subprocess.call((EXE_ASEPRITE, '-b', src, "--save-as", dst))
 
+
 def process_tiled(src, dst, *, follow_symlinks=True):
     dst = change_ext(dst, ".lua")
-    subprocess.call((EXE_TILED, "--export-map", src, dst))
+    if if_newer(src, dst):
+        subprocess.call((EXE_TILED, "--export-map", src, dst))
 
 EXT_SRC = {
-    "":          None,  # should be directory
-    ".lua":      shutil.copy2,
-    ".moon":     process_moon,
-    ".ase":      process_aseprite,
+    "": None,  # should be directory
+    ".lua": shutil.copy2,
+    ".moon": process_moon,
+    ".ase": process_aseprite,
     ".aseprite": process_aseprite,
-    ".tmx":      process_tiled,
+    ".tmx": process_tiled,
 }
 
 # Copying/Compiling source code
@@ -155,22 +168,57 @@ def ignore_func(curdir, file_names):
     return names
 
 
+def if_newer(src, dst):
+    global incdb
+    if not INCREMENT:
+        return True
+    assert(type(incdb) is dict)
+    last_modify_time = incdb.get(src, 0)
+    cur_modify_time = os.path.getmtime(src)
+    if not os.path.exists(dst) or last_modify_time < cur_modify_time:
+        incdb[src] = cur_modify_time
+        return True
+    elif last_modify_time > cur_modify_time:
+        raise Exception("? Last modify time is before current modify time,\ndelete PATH_INCDB to continue.")
+    return False
+
+
+def copy_if_newer(src, dst, *, follow_symlinks=True):
+    if if_newer(src, dst):
+        shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
+
+
 def copy_func(src, dst, *, follow_symlinks=True):
     print("Processing", src)
     ext = get_extp(src)
-    EXT_SRC.get(ext, shutil.copy2)(src, dst, follow_symlinks=follow_symlinks)
+    EXT_SRC.get(ext, shutil.copy2)(
+        src, dst, follow_symlinks=follow_symlinks)
 
 
 def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
-    if os.path.exists(path_out_fused):
-        shutil.rmtree(path_out_fused)
-    if os.path.exists(path_out_extern):
-        shutil.rmtree(path_out_extern)
+    # if os.path.exists(path_out_fused):
+    #     shutil.rmtree(path_out_fused)
+    # if os.path.exists(path_out_extern):
+    #     shutil.rmtree(path_out_extern)
+    if not os.path.exists(PATH_TMP):
+        os.mkdir(PATH_TMP)
+
+    if INCREMENT:
+        global incdb
+        if os.path.exists(PATH_INCDB):
+            with open(PATH_INCDB, 'rb') as file:
+                incdb = pickle.load(file)
+        else:
+            incdb = dict()
 
     copytree(PATH_DYNAMIC, path_out_fused,
              ignore=ignore_func, copy_function=copy_func)
-    copytree(PATH_STATIC, path_out_fused)
+    copytree(PATH_STATIC, path_out_fused, copy_function=copy_if_newer)
     copytree(PATH_EXTERNAL, path_out_extern, copy_function=copy_func)
 
+    with open(PATH_INCDB, 'wb') as file:
+        pickle.dump(incdb, file)
+
 if __name__ == '__main__':
+    INCREMENT = True
     build()

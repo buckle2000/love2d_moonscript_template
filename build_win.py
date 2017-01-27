@@ -7,10 +7,10 @@ EXE_LOVE_DIR = r"C:\Program Files\LOVE" + "\\" # directory containing LÖVE exec
 EXE_LOVE_EXE = "love.exe" # the name of LÖVE executable
 EXE_OUT_EXE  = "game.exe" # the name of result executable
 
-PATH_OUT_FUSED    = "_out/fused/"
-PATH_OUT_EXTERNAL = "_out/external/"
-PATH_OUT_LOVEZIP  = "_out/lovezip"
-PATH_OUT_BUILD    = "_out/win32"
+PATH_OUT_FUSED    = "__pycache__/fused/"
+PATH_OUT_EXTERNAL = "__pycache__/external/"
+PATH_OUT_LOVEZIP  = "__pycache__/lovezip"
+PATH_OUT_BUILD    = "__pycache__/win32"
 
 build.build(PATH_OUT_FUSED, PATH_OUT_EXTERNAL)
 
