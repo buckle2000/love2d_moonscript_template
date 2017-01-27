@@ -34,7 +34,7 @@ Run `build_win.py`.
 ### Source Compiling
 
 - [X] Mix `.moon` and `.lua` files
-- [x] Incremental Build
+- [x] Incremental Build (caution: do not build twice in 1 second)
 - [ ] Compile to bytecode
 
 ### Asset Pipeline
