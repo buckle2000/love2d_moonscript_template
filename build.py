@@ -145,7 +145,7 @@ def process_tiled(src, dst, *, follow_symlinks=True):
         subprocess.call((EXE_TILED, "--export-map", src, dst))
 
 EXT_SRC = {
-    "": None,  # should be directory
+    "": shutil.copy2, # file with no extension
     ".lua": shutil.copy2,
     ".moon": process_moon,
     ".ase": process_aseprite,

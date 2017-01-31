@@ -1,5 +1,5 @@
 @echo off
 python build.py
-pushd _out\src
+pushd __pycache__\src
 love .
 popd
