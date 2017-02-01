@@ -23,6 +23,10 @@ import shutil
 import subprocess
 import IPython
 
+def copytree2(src, *a, **k):
+    if os.path.isdir(src):
+        return copytree(src, *a, **k)
+
 
 def copytree(src, dst, symlinks=False, ignore=None, copy_function=shutil.copy2):
     names = os.listdir(src)
@@ -211,10 +215,10 @@ def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
         else:
             incdb = dict()
 
-    copytree(PATH_DYNAMIC, path_out_fused,
+    copytree2(PATH_DYNAMIC, path_out_fused,
              ignore=ignore_func, copy_function=copy_func)
-    copytree(PATH_STATIC, path_out_fused, copy_function=copy_if_newer)
-    copytree(PATH_EXTERNAL, path_out_extern, copy_function=copy_func)
+    copytree2(PATH_STATIC, path_out_fused, copy_function=copy_if_newer)
+    copytree2(PATH_EXTERNAL, path_out_extern, copy_function=copy_func)
 
     with open(PATH_INCDB, 'wb') as file:
         pickle.dump(incdb, file)

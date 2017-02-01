@@ -45,6 +45,7 @@ i.e. auto-process in one click
 
 
 ## Directory Structure
+Those directories don't need to exist.
 
 ### `dynamic/`
 These files will be processed before written to the output.
