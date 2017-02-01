@@ -207,8 +207,8 @@ def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
     if not os.path.exists(PATH_TMP):
         os.mkdir(PATH_TMP)
 
+    global incdb
     if INCREMENT:
-        global incdb
         if os.path.exists(PATH_INCDB):
             with open(PATH_INCDB, 'rb') as file:
                 incdb = pickle.load(file)
@@ -220,8 +220,9 @@ def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
     copytree2(PATH_STATIC, path_out_fused, copy_function=copy_if_newer)
     copytree2(PATH_EXTERNAL, path_out_extern, copy_function=copy_func)
 
-    with open(PATH_INCDB, 'wb') as file:
-        pickle.dump(incdb, file)
+    if INCREMENT:
+        with open(PATH_INCDB, 'wb') as file:
+            pickle.dump(incdb, file)
 
 if __name__ == '__main__':
     INCREMENT = True
