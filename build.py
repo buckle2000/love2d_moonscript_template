@@ -209,12 +209,15 @@ def build(path_out_fused=PATH_OUT, path_out_extern=PATH_OUT):
 
     global incdb
     if INCREMENT:
-        if os.path.exists(PATH_INCDB):
-            with open(PATH_INCDB, 'rb') as file:
-                incdb = pickle.load(file)
-        else:
+        try:
+            if os.path.exists(PATH_INCDB):
+                with open(PATH_INCDB, 'rb') as file:
+                    incdb = pickle.load(file)
+            else:
+                incdb = dict()
+        except:
             incdb = dict()
-
+            
     copytree2(PATH_DYNAMIC, path_out_fused,
              ignore=ignore_func, copy_function=copy_func)
     copytree2(PATH_STATIC, path_out_fused, copy_function=copy_if_newer)
