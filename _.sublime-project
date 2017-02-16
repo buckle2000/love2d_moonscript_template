@@ -3,7 +3,13 @@
 	[
 		{
 			"cmd": "test.cmd",
-			"name": "Test Game",
+			"name": "Test",
+			"shell": true,
+			"working_dir": "$project_path"
+		},
+		{
+			"cmd": "clean.cmd",
+			"name": "Clean",
 			"shell": true,
 			"working_dir": "$project_path"
 		},
@@ -11,6 +17,7 @@
 	"folders":
 	[
 		{"path": "dynamic"},
-		{"path": "static"}
+		{"path": "static"},
+		{"path": "__pycache__/src", "name": "export"},
 	]
 }
